@@ -10,16 +10,12 @@ jobs:
       image: node:16.13-buster
     steps:
       - uses: actions/checkout@v2
-#        with:
-#          path: frontend
-#      - name: "test"
-#        run: "ls -la && ls -la frontend"
       - name: "Install deps js"
         run: npm ci
-#        working-directory: frontend
       - name: "Build js"
         run: npm run build
-#        working-directory: frontend
+      - name: "pwd"
+        run: pwd
       - name: "Copy to server"
         uses: garygrossgarten/github-action-scp@release
         with:
