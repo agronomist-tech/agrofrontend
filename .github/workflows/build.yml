@@ -20,5 +20,5 @@ jobs:
           host: ${{ secrets.HOST }}
           username: root
           privateKey: ${{ secrets.SSH_DEPLOY_KEY }}
-          local: "/__w/agrofrontend/agrofrontend/build/*"
+          local: "./build/*"
           remote: "/var/www/app.agronomist.tech/"
