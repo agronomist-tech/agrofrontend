@@ -5,4 +5,7 @@ jobs:
     runs-on: ubuntu-20.04
     container: node:16.13-buster
     steps:
-      - run: npm -v
+      - uses: actions/checkout@v2
+        with:
+          path: /frontend
+      - run: ls -la /frontend
