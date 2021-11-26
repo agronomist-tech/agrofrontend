@@ -8,25 +8,23 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: node:16.13-buster
-      volumes:
-        - /source/frontend:/source/frontend
     steps:
       - uses: actions/checkout@v2
-        with:
-          path: /source/frontend
+#        with:
+#          path: frontend
+      - name: "test"
+        run: "ls -la && ls -la frontend"
       - name: "Install deps js"
         run: npm ci
-        working-directory: /source/frontend
+#        working-directory: frontend
       - name: "Build js"
         run: npm run build
-        working-directory: /source/frontend
-      - name: "test"
-        run: "ls -la && ls -la /source/frontend"
+#        working-directory: frontend
       - name: "Copy to server"
         uses: garygrossgarten/github-action-scp@release
         with:
           host: ${{ secrets.HOST }}
           username: root
-          privateKEy: ${{ secrets.SSH_DEPLOY_KEY }}
-          local: "/source/frontend/build/*"
+          privateKey: ${{ secrets.SSH_DEPLOY_KEY }}
+          local: "build/*"
           remote: "/var/www/app.agronomist.tech/"
