@@ -1,0 +1,139 @@
+@import '~antd/dist/antd.less';
+
+//global
+@text-color: #fff;
+@font-family: "Montserrat",sans-serif;
+@line-height-base: 32px;
+@heading-color: @text-color;
+
+// colors
+@blue-base: #69ba43;
+
+// layout
+@layout-sider-background: #050505;
+@layout-header-background: #191919;
+
+@border-settings: 1px solid #222;
+
+.ant-layout-content {
+  background-color: #111;
+}
+
+.ant-layout-sider {
+  border-right: @border-settings
+}
+
+.ant-layout-header {
+  border-bottom: @border-settings
+}
+
+// Button
+
+.ant-btn {
+  font-weight: 600;
+  border-radius: 100px;
+}
+
+//menu
+@menu-bg: 0 0;
+@menu-item-color: #949494;
+@menu-item-group-title-color: @menu-item-color;
+@menu-highlight-color: @menu-item-color;
+@menu-item-active-bg: #191919;
+@menu-item-active-border-width: 0;
+@border-width-base: 0;
+
+@disabled-color: #222222;
+
+.ant-menu {
+  font-weight: 800;
+}
+
+.ant-menu-item-selected {
+  border-bottom: solid 2px #69ba43;
+}
+
+.ant-menu-item-active {
+  background-color: @menu-item-active-bg;
+}
+
+// Input
+@input-bg: #222;
+
+.ant-input {
+  padding-left: 20px;
+  border-radius: 100px;
+}
+
+// Table
+
+@table-bg: @layout-sider-background;
+@table-header-bg: @table-bg;
+@table-border-radius-base: 0;
+
+@table-selected-row-bg: #222;
+@table-row-hover-bg: #222;
+
+// sorted
+@table-header-sort-bg: @table-header-bg;
+@table-body-sort-bg: #111;
+
+.ant-table-thead > tr > th {
+  font-weight: 800;
+}
+
+.ant-table-tbody > tr {
+  background-color: #111;
+}
+
+tr.active-pair {
+  background-color: @table-selected-row-bg;
+}
+
+
+// Pagination
+@pagination-item-bg: @table-selected-row-bg;
+@pagination-item-link-bg: @pagination-item-bg;
+@pagination-item-bg-active: @pagination-item-bg;
+
+
+// Select
+@select-background: @table-selected-row-bg;
+@select-dropdown-bg: @layout-sider-background;
+@select-item-selected-bg: @select-background;
+@select-item-active-bg: @select-background;
+
+.ant-select-arrow {
+  color: @blue-base;
+}
+
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  border-radius: 100px;
+}
+
+// radio button
+@radio-button-bg: transparent;
+@radio-button-checked-bg: @radio-button-bg;
+
+.ant-radio-button-wrapper {
+  border: 0;
+}
+
+.ant-radio-button-wrapper:not(:first-child)::before {
+  width: 0;
+}
+
+// Modal
+
+@modal-content-bg: #121212;
+@modal-header-bg: #222222;
+
+@modal-close-color: #c4c4c4;
+
+.ant-modal-content {
+  border-radius: 20px;
+}
+
+.ant-modal-header {
+  border-radius: 20px 20px 0 0;
+}

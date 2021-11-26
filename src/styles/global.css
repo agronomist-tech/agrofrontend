@@ -1,0 +1,12 @@
+body {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    background-color: #222;
+}
+
+div#root {
+}
+
+h1 {
+    font-size: 24px;
+}

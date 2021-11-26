@@ -1,0 +1,31 @@
+.pair-title {
+    font-weight: 700;
+    font-size: 24px;
+    padding-left: 1rem;
+    padding-top: 2rem;
+}
+
+.pair-cost {
+    margin-left: 1rem;
+    font-weight: 600;
+    color: #cccccc;
+}
+
+.pairs-table {
+    padding: 1rem;
+}
+
+.agte-amount {
+    border-radius: 100px;
+    background-color: #222;
+    line-height: 32px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.agte-amount > svg {
+    float: left;
+    margin-top: 4px;
+    height: 24px;
+    margin-right: 0.5rem;
+}
