@@ -3,6 +3,6 @@ on: [push]
 jobs:
   Build:
     runs-on: ubuntu-20.04
-    container: lts-buster
+    container: 16.13-buster
     steps:
       - run: npm -v
