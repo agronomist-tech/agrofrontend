@@ -1,0 +1,8 @@
+name: Build application
+on: [push]
+jobs:
+  Build:
+    runs-on: ubuntu-20.04
+    container: lts-buster
+    steps:
+      - run: npm -v
