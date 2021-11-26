@@ -6,24 +6,27 @@ on:
 jobs:
   Build:
     runs-on: ubuntu-20.04
-    container: node:16.13-buster
+    container:
+      image: node:16.13-buster
+      volumes:
+        - /source/frontend:/source/frontend
     steps:
       - uses: actions/checkout@v2
         with:
-          path: frontend
+          path: /source/frontend
       - name: "Install deps js"
         run: npm ci
-        working-directory: frontend
+        working-directory: /source/frontend
       - name: "Build js"
         run: npm run build
-        working-directory: frontend
+        working-directory: /source/frontend
       - name: "test"
-        run: "ls -la && ls -la frontend"
+        run: "ls -la && ls -la /source/frontend"
       - name: "Copy to server"
         uses: garygrossgarten/github-action-scp@release
         with:
           host: ${{ secrets.HOST }}
           username: root
           privateKEy: ${{ secrets.SSH_DEPLOY_KEY }}
-          local: "frontend/build/*"
+          local: "/source/frontend/build/*"
           remote: "/var/www/app.agronomist.tech/"
