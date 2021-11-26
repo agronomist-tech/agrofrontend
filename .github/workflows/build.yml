@@ -14,13 +14,11 @@ jobs:
         run: npm ci
       - name: "Build js"
         run: npm run build
-      - name: "pwd"
-        run: pwd
       - name: "Copy to server"
         uses: garygrossgarten/github-action-scp@release
         with:
           host: ${{ secrets.HOST }}
           username: root
           privateKey: ${{ secrets.SSH_DEPLOY_KEY }}
-          local: "build/*"
+          local: "agrofrontend/build/*"
           remote: "/var/www/app.agronomist.tech/"
