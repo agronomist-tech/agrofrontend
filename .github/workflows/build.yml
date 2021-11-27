@@ -15,10 +15,12 @@ jobs:
       - name: "Build js"
         run: npm run build
       - name: "Copy to server"
-        uses: garygrossgarten/github-action-scp@release
-        with:
-          host: ${{ secrets.HOST }}
-          username: root
-          privateKey: ${{ secrets.SSH_DEPLOY_KEY }}
-          local: "./build/*"
-          remote: "/var/www/app.agronomist.tech/"
+        env:
+          SSH_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+          HOST: ${{ secrets.HOST }}
+        run: |
+          apt-get update
+          apt-get install -y openssh-client
+          echo "$SSH_KEY" >> /tmp/ssh_key.rsa
+          chmod 400 /tmp/ssh_key.rsa
+          scp -i /tmp/ssh_key.rsa -r ./build/* root@$HOST:/var/www/app.agronomist.tech/
