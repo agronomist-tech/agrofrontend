@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {ReactNode} from 'react';
 import {useMemo} from "react";
 
 import {ConnectionProvider, WalletProvider} from '@solana/wallet-adapter-react';
@@ -13,9 +13,14 @@ import {
 import {clusterApiUrl} from '@solana/web3.js';
 
 import {observer} from "mobx-react-lite";
-import WalletConnectButtonWithModal from "./connect";
 
-const WalletComponent = observer(() => {
+
+interface Props {
+    children: ReactNode
+}
+
+
+const WalletWrapper = observer((props: Props) => {
     const network = WalletAdapterNetwork.Mainnet;
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
@@ -32,11 +37,11 @@ const WalletComponent = observer(() => {
     return (
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets}>
-                <WalletConnectButtonWithModal />
+                {props.children}
             </WalletProvider>
         </ConnectionProvider>
     )
 })
 
 
-export default WalletComponent;
+export default WalletWrapper;

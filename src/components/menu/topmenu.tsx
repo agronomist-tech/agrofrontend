@@ -3,7 +3,7 @@ import {Col, Row, Select} from 'antd';
 import {observer} from "mobx-react-lite";
 import {useContext} from "react";
 import {Store} from "../../App";
-import WalletComponent from "../wallet";
+import WalletConnectButtonWithModal from "../wallet/connect";
 
 const TopMenu = observer(() => {
     const store = useContext(Store);
@@ -30,7 +30,7 @@ const TopMenu = observer(() => {
                     </Select>
                 </Col>
                 <Col span={7} offset={1}>
-                    <WalletComponent />
+                    <WalletConnectButtonWithModal />
                 </Col>
             </Row>
         </>

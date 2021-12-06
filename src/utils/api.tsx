@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 type RatioRecord = {
     pair: string,
     price: number,
@@ -16,7 +18,11 @@ function fetchPairs(): Promise<RatioRecord[]>{
 }
 
 function fetchPairHistory(pair: string, activePeriod: string): Promise<PairHistoryData>{
-    return fetch(`/api/getPrices?pair=${pair}&period=${activePeriod}`).then((resp) => resp.json())
+    return fetch(`/api/getPrices?pair=${pair}&period=${activePeriod}`).then((resp) => {
+        return resp.json().then((data: PairHistoryData)=>{
+            return {prices: data.prices, dates: data.dates.map((record: string)=>dayjs(record).format())}
+        })
+    })
 }
 
 function searchPairs(query: string): Promise<string[]>{
@@ -24,4 +30,9 @@ function searchPairs(query: string): Promise<string[]>{
 }
 
 
-export {fetchPairs, fetchPairHistory, searchPairs};
+function getNFTAddresses(): Promise<string[]>{
+    return fetch('/api/listNFT').then(resp=>resp.json())
+}
+
+
+export {fetchPairs, fetchPairHistory, searchPairs, getNFTAddresses};

@@ -1,11 +1,13 @@
-import React, {useEffect, useState, useContext} from 'react';
-import {Col, Row,Table, Radio} from 'antd';
+import React, {useEffect, useState} from 'react';
+import {Col, Row, Table, Radio} from 'antd';
 import {useQuery} from "react-query";
 import {observer} from "mobx-react-lite";
 import dayjs from 'dayjs'
 import {fetchPairs, fetchPairHistory} from "../../utils/api";
 import {PairChart} from "../../components/charts";
-import {Store} from "../../App";
+// import {Store} from "../../App";
+import {setURLPair} from "../../utils/urls";
+import {useStore} from "../../utils/hooks";
 
 const columns = [
     {
@@ -13,7 +15,7 @@ const columns = [
         dataIndex: "pair",
         key: "pair",
         sorter: (a: Pair, b: Pair) => {
-            return (a.pair > b.pair)? 1: -1
+            return (a.pair > b.pair) ? 1 : -1
         }
     },
     {
@@ -21,7 +23,7 @@ const columns = [
         dataIndex: "ratio",
         key: "ratio",
         sorter: (a: Pair, b: Pair) => {
-            return (a.ratio > b.ratio)? 1: -1
+            return (a.ratio > b.ratio) ? 1 : -1
         }
     },
     {
@@ -29,10 +31,11 @@ const columns = [
         dataIndex: "lastUpdate",
         key: "update",
         sorter: (a: Pair, b: Pair) => {
-            return (dayjs(a.lastUpdate) > dayjs(b.lastUpdate))? 1: -1
+            return (dayjs(a.lastUpdate) > dayjs(b.lastUpdate)) ? 1 : -1
         }
     }
 ]
+
 
 type Pair = {
     pair: string,
@@ -42,7 +45,7 @@ type Pair = {
 
 
 const PairsPage = observer(() => {
-    const {isLoading, data } = useQuery('todos', fetchPairs)
+    const {isLoading, data} = useQuery('todos', fetchPairs)
     const [activePair, setActivePair] = useState("");
     const [activePeriod, setActivePeriod] = useState("24H");
 
@@ -51,7 +54,7 @@ const PairsPage = observer(() => {
         data: historyData,
         refetch: refetchHistory
     } = useQuery(['pairData', activePair, activePeriod], () => fetchPairHistory(activePair, activePeriod), {enabled: false})
-    const store = useContext(Store);
+    const store = useStore();
 
     let pairsData: Pair[] = [];
 
@@ -63,26 +66,25 @@ const PairsPage = observer(() => {
     }
 
     const setActiveRow = (pair: string) => {
-        if (activePair === pair){
+        if (activePair === pair) {
             setActivePair("");
             store.setSearchItem(undefined);
+            setURLPair("");
         } else {
             setActivePair(pair);
-            const url = new URL(window.location.href);
-            url.searchParams.set('pair', pair);
-            window.history.pushState({}, '', url.toString());
+            setURLPair(pair);
         }
     }
 
-    useEffect(()=>{
+    useEffect(() => {
         setActivePair(store.searchItem || "")
     }, [store.searchItem])
 
-    useEffect(()=>{
+    useEffect(() => {
         const urlSearchParams = new URLSearchParams(window.location.search);
         const pair = urlSearchParams.get('pair');
-        if (pair != null){
-            setActivePair(pair)
+        if (pair != null) {
+            setActivePair(pair);
         }
     }, [])
 
@@ -102,7 +104,7 @@ const PairsPage = observer(() => {
             }
         })
         if (store.searchItem) {
-            pairsData = pairsData.filter((v)=>v.pair === store.searchItem)
+            pairsData = pairsData.filter((v) => v.pair === store.searchItem)
         }
     }
 
@@ -113,11 +115,12 @@ const PairsPage = observer(() => {
                     <React.Fragment>
                         <Row className="pair-title">
                             <Col span={18}>
-                                <div>{activePair} {historyData? <span className="pair-cost">{historyData.prices.slice(-1)[0]}</span>: <></>}</div>
+                                <div>{activePair} {historyData ? <span
+                                    className="pair-cost">{parseFloat(historyData.prices.slice(-1)[0]).toString()}</span> : <></>}</div>
 
                             </Col>
                             <Col span={6} style={{textAlign: "right", paddingRight: "1rem"}}>
-                                <Radio.Group defaultValue={"24H"} onChange={(e)=>{
+                                <Radio.Group defaultValue={"24H"} onChange={(e) => {
                                     setActivePeriod(e.target.value)
                                 }}>
                                     <Radio.Button value="24H">24H</Radio.Button>
