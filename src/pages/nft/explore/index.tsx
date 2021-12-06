@@ -27,7 +27,7 @@ const ExplorePage = observer(() => {
                 setLoading(false);
             })
         }
-    }, [publicKey])
+    }, [publicKey, connection, store.nft])
 
     return (
         <>
