@@ -19,15 +19,16 @@ const ExplorePage = observer(() => {
     const {connection} = useConnection();
     const {publicKey, connected} = useWallet();
 
+    useEffect(()=>store.nft.saveNFTMint(), [store.nft])
+
     useEffect(() => {
-        store.nft.saveNFTMint();
         if (publicKey) {
             getNFTsInWallet(connection, publicKey).then((data) => {
                 store.nft.saveUserNFTs(getOurNFT(store.nft.addresses, data));
                 setLoading(false);
             })
         }
-    }, [publicKey, connection, store.nft])
+    }, [publicKey, connection, store.nft.addresses, store.nft])
 
     return (
         <>
