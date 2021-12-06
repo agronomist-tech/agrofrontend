@@ -15,7 +15,7 @@ import LeftMenu from "./components/menu/leftmenu";
 import TopMenu from "./components/menu/topmenu";
 import PairsPage from "./pages/pairs";
 import ExplorePage from "./pages/nft/explore";
-import {BrowserRouter, Routes, Route} from "react-router-dom";
+import {HashRouter, Routes, Route} from "react-router-dom";
 import WalletWrapper from "./components/wallet";
 
 const queryClient = new QueryClient();
@@ -28,7 +28,7 @@ const App = observer(() => {
             <Store.Provider value={rootStore}>
                 <WalletWrapper>
                     <QueryClientProvider client={queryClient}>
-                        <BrowserRouter>
+                        <HashRouter>
                             <Layout style={{height: "100%"}}>
                                 <Layout.Sider style={{
                                     overflow: 'auto',
@@ -45,12 +45,12 @@ const App = observer(() => {
                                     <Layout.Content>
                                         <Routes>
                                             <Route path="/" element={<PairsPage/>}/>
-                                            <Route path="nft/explore" element={<ExplorePage/>}/>
+                                            <Route path="/nft/explore" element={<ExplorePage/>}/>
                                         </Routes>
                                     </Layout.Content>
                                 </Layout>
                             </Layout>
-                        </BrowserRouter>
+                        </HashRouter>
                     </QueryClientProvider>
                 </WalletWrapper>
             </Store.Provider>
