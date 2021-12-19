@@ -1,11 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {Col, Row, Table, Radio} from 'antd';
+import {Col, Row, Table, Radio, Avatar} from 'antd';
 import {useQuery} from "react-query";
 import {observer} from "mobx-react-lite";
 import dayjs from 'dayjs'
 import {fetchPairs, fetchPairHistory} from "../../utils/api";
-import {PairChart} from "../../components/charts";
-// import {Store} from "../../App";
+import {PairChart, RechartPairChart} from "../../components/charts";
 import {setURLPair} from "../../utils/urls";
 import {useStore} from "../../utils/hooks";
 
@@ -16,6 +15,20 @@ const columns = [
         key: "pair",
         sorter: (a: Pair, b: Pair) => {
             return (a.pair > b.pair) ? 1 : -1
+        },
+        render: (text: string) => {
+            const tokens = text.split("/")
+            return <>
+                <Avatar.Group maxCount={2} size={24} style={{marginRight: "8px"}}>
+                    <Avatar
+                        size={"small"}
+                        src={process.env.PUBLIC_URL + `/tokens/${tokens[0]}.png`}/>
+                    <Avatar
+                        size={"small"}
+                        src={process.env.PUBLIC_URL + `/tokens/${tokens[1]}.png`}/>
+                </Avatar.Group>
+                {text}
+            </>
         }
     },
     {
@@ -115,8 +128,17 @@ const PairsPage = observer(() => {
                     <React.Fragment>
                         <Row className="pair-title">
                             <Col span={18}>
-                                <div>{activePair} {historyData ? <span
-                                    className="pair-cost">{parseFloat(historyData.prices.slice(-1)[0]).toString()}</span> : <></>}</div>
+                                <div>
+                                    <Avatar.Group maxCount={2} size={24} style={{marginRight: "8px"}}>
+                                        <Avatar
+                                            src={process.env.PUBLIC_URL + `/tokens/${activePair.split("/")[0]}.png`}/>
+                                        <Avatar
+                                            src={process.env.PUBLIC_URL + `/tokens/${activePair.split("/")[1]}.png`}/>
+                                    </Avatar.Group>
+
+                                    {activePair} {historyData ? <span
+                                    className="pair-cost">{parseFloat(historyData.prices.slice(-1)[0]).toFixed(8)}</span> : <></>}
+                                </div>
 
                             </Col>
                             <Col span={6} style={{textAlign: "right", paddingRight: "1rem"}}>
@@ -132,7 +154,8 @@ const PairsPage = observer(() => {
                         </Row>
                         {!isHistoryLoading && historyData ?
                             <Row style={{width: "100%"}}>
-                                <PairChart x={historyData.dates} y={historyData.prices}/>
+                                {/*<PairChart x={historyData.dates} y={historyData.prices}/>*/}
+                                <RechartPairChart x={historyData.dates} y={historyData.prices}/>
                             </Row> : <></>
                         }
                     </React.Fragment>
