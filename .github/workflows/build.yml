@@ -6,6 +6,8 @@ on:
 jobs:
   Build:
     runs-on: ubuntu-20.04
+    env:
+      NODE_OPTIONS: "--max_old_space_size=1900"
     container:
       image: node:16.13-buster
     steps:
