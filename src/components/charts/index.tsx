@@ -1,5 +1,5 @@
 import React from 'react';
-import Plot from 'react-plotly.js';
+// import Plot from 'react-plotly.js';
 import dayjs from 'dayjs'
 import {Area, AreaChart, Tooltip, XAxis, YAxis, ResponsiveContainer, TooltipProps} from "recharts";
 
@@ -8,37 +8,37 @@ interface ChartData {
     y: string[]
 }
 
-
-const PairChart = ({x, y}: ChartData) => {
-    const plotlyData = [
-        {
-            showlegend: false,
-            line: {
-                color: "#46D521",
-                shape: "spline"
-            },
-            x: x,
-            y: y
-        }
-    ]
-
-    return (
-        <>
-            <Plot data={plotlyData}
-                  config={{
-                      displaylogo: false,
-                      displayModeBar: false
-                  }}
-                  layout={{
-                      xaxis: {showgrid: false},
-                      yaxis: {showgrid: false, exponentformat: "none"},
-                      autosize: true,
-                      plot_bgcolor: "rgba(0,0,0,0)",
-                      paper_bgcolor: "rgba(0,0,0,0)"}}
-                  style={{width: "100%"}} />
-        </>
-    )
-}
+//
+// const PairChart = ({x, y}: ChartData) => {
+//     const plotlyData = [
+//         {
+//             showlegend: false,
+//             line: {
+//                 color: "#46D521",
+//                 shape: "spline"
+//             },
+//             x: x,
+//             y: y
+//         }
+//     ]
+//
+//     return (
+//         <>
+//             <Plot data={plotlyData}
+//                   config={{
+//                       displaylogo: false,
+//                       displayModeBar: false
+//                   }}
+//                   layout={{
+//                       xaxis: {showgrid: false},
+//                       yaxis: {showgrid: false, exponentformat: "none"},
+//                       autosize: true,
+//                       plot_bgcolor: "rgba(0,0,0,0)",
+//                       paper_bgcolor: "rgba(0,0,0,0)"}}
+//                   style={{width: "100%"}} />
+//         </>
+//     )
+// }
 
 
 const CustomTooltip = (props: TooltipProps<any, any>) => {
@@ -92,4 +92,4 @@ const RechartPairChart = ({x, y}: ChartData) => {
 }
 
 
-export {PairChart, RechartPairChart}
+export {RechartPairChart}

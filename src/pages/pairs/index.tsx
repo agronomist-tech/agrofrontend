@@ -4,7 +4,7 @@ import {useQuery} from "react-query";
 import {observer} from "mobx-react-lite";
 import dayjs from 'dayjs'
 import {fetchPairs, fetchPairHistory} from "../../utils/api";
-import {PairChart, RechartPairChart} from "../../components/charts";
+import {RechartPairChart} from "../../components/charts";
 import {setURLPair} from "../../utils/urls";
 import {useStore} from "../../utils/hooks";
 
