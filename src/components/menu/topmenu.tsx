@@ -1,12 +1,16 @@
 import React from 'react';
 import {Col, Row, Select} from 'antd';
 import {observer} from "mobx-react-lite";
-import {useContext} from "react";
-import {Store} from "../../App";
+import {useNavigate, useLocation} from "react-router";
+import {useSearchParams} from "react-router-dom";
 import WalletConnectButtonWithModal from "../wallet/connect";
+import {useStore} from "../../utils/hooks";
 
 const TopMenu = observer(() => {
-    const store = useContext(Store);
+    const store = useStore();
+    let navigate = useNavigate();
+    let location = useLocation();
+    let [searchParams, setSearchParams] = useSearchParams();
 
     const items = store.searchItems.map((item)=>{
         return <Select.Option key={item} value={item}>{item}</Select.Option>
@@ -18,10 +22,21 @@ const TopMenu = observer(() => {
                 <Col span={16}>
                     <Select
                         allowClear
-                        onClear={()=>store.setSearchItem(undefined)}
+                        onClear={()=>{
+                            store.setSearchItem(null);
+                            setSearchParams({});
+                        }}
                         value={store.searchItem || undefined}
                         onSearch={store.search}
-                        onSelect={store.setSearchItem}
+                        onSelect={(pair: string)=>{
+                            store.setSearchItem(pair);
+                            if (location.pathname !== "/"){
+                                navigate(`/?pair=${pair}`);
+                            } else {
+                                setSearchParams({pair: pair});
+                            }
+
+                        }}
                         showSearch
                         showArrow={false}
                         style={{width: "100%"}}

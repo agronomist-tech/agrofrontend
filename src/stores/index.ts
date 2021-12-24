@@ -1,12 +1,11 @@
 import { makeAutoObservable, runInAction, action } from 'mobx';
 import {searchPairs} from "../utils/api";
-import {setURLPair} from "../utils/urls";
 import NFTStore from "./nft";
 
 class RootStore {
     nft: NFTStore;
     searchItems: string[] = [];
-    searchItem: string | undefined = undefined;
+    searchItem: string | null = null;
 
     constructor() {
         makeAutoObservable(this, {
@@ -21,10 +20,8 @@ class RootStore {
         runInAction(()=>this.searchItems=items);
     }
 
-    setSearchItem(item: string | undefined){
+    setSearchItem(item: string | null){
         this.searchItem = item;
-        const pair = item || '';
-        setURLPair(pair);
     }
 }
 

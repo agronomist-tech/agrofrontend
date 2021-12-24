@@ -3,9 +3,9 @@ import {Col, Row, Table, Radio, Avatar} from 'antd';
 import {useQuery} from "react-query";
 import {observer} from "mobx-react-lite";
 import dayjs from 'dayjs'
+import {useSearchParams} from "react-router-dom";
 import {fetchPairs, fetchPairHistory} from "../../utils/api";
 import {RechartPairChart} from "../../components/charts";
-import {setURLPair} from "../../utils/urls";
 import {useStore} from "../../utils/hooks";
 
 const columns = [
@@ -59,8 +59,9 @@ type Pair = {
 
 const PairsPage = observer(() => {
     const {isLoading, data} = useQuery('todos', fetchPairs)
-    const [activePair, setActivePair] = useState("");
     const [activePeriod, setActivePeriod] = useState("24H");
+    const [activePair, setActivePair] = useState("");
+    let [searchParams, setSearchParams] = useSearchParams();
 
     const {
         isLoading: isHistoryLoading,
@@ -72,40 +73,45 @@ const PairsPage = observer(() => {
     let pairsData: Pair[] = [];
 
     const setActiveClass = (record: Pair, index: number): string => {
-        if (record.pair === activePair || record.pair === store.searchItem) {
+        if (record.pair === searchParams.get("pair") || record.pair === store.searchItem) {
             return "active-pair"
         }
         return ""
     }
 
     const setActiveRow = (pair: string) => {
-        if (activePair === pair) {
+        if (searchParams.get("pair") === pair) {
+            store.setSearchItem(null);
+            setSearchParams({})
             setActivePair("");
-            store.setSearchItem(undefined);
-            setURLPair("");
         } else {
             setActivePair(pair);
-            setURLPair(pair);
+            setSearchParams({pair: pair})
         }
     }
 
-    useEffect(() => {
-        setActivePair(store.searchItem || "")
-    }, [store.searchItem])
+    // useEffect(()=>{
+    //     // Manage new page open with search param
+    //     const pair = searchParams.get("pair");
+    //     if (pair){
+    //         setActivePair(pair);
+    //     }
+    // }, [])
 
     useEffect(() => {
-        const urlSearchParams = new URLSearchParams(window.location.search);
-        const pair = urlSearchParams.get('pair');
+        const pair = searchParams.get('pair');
         if (pair != null) {
             setActivePair(pair);
+        } else {
+            setActivePair("");
         }
-    }, [])
+    }, [searchParams])
 
     useEffect(() => {
-        if (activePair) {
+        if (searchParams.get("pair") || "") {
             refetchHistory();
         }
-    }, [activePair, activePeriod, refetchHistory])
+    }, [searchParams, activePair, activePeriod, refetchHistory])
 
     if (data) {
         pairsData = data.map((record) => {
@@ -136,8 +142,9 @@ const PairsPage = observer(() => {
                                             src={process.env.PUBLIC_URL + `/tokens/${activePair.split("/")[1]}.png`}/>
                                     </Avatar.Group>
 
-                                    {activePair} {historyData ? <span
-                                    className="pair-cost">{parseFloat(historyData.prices.slice(-1)[0]).toFixed(8)}</span> : <></>}
+                                    {activePair} {historyData ?
+                                        <span className="pair-cost">{parseFloat(historyData.prices.slice(-1)[0]).toFixed(8)}</span> :
+                                    <></>}
                                 </div>
 
                             </Col>
@@ -154,7 +161,6 @@ const PairsPage = observer(() => {
                         </Row>
                         {!isHistoryLoading && historyData ?
                             <Row style={{width: "100%"}}>
-                                {/*<PairChart x={historyData.dates} y={historyData.prices}/>*/}
                                 <RechartPairChart x={historyData.dates} y={historyData.prices}/>
                             </Row> : <></>
                         }
