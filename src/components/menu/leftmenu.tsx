@@ -35,7 +35,9 @@ const LeftMenu = () => {
                             <Menu.Item key="nftExplorer">
                                 <Link to={"/nft/explore"}>Explore</Link>
                             </Menu.Item>
-                            <Menu.Item key="nftStaking" disabled>Staking <Tag color={"gold"}>SOON</Tag></Menu.Item>
+                            <Menu.Item key="nftStaking">
+                                <Link to={"/nft/staking"}>Staking</Link>
+                            </Menu.Item>
                         </Menu.ItemGroup>
                     </Menu>
                 </Row>

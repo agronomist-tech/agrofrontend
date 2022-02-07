@@ -1,5 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-
+import {
+    BN
+} from '@project-serum/anchor'
 
 const tokenProgram = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 
@@ -16,4 +18,7 @@ const getNFTsInWallet = async (connection: Connection, publicKey: PublicKey): Pr
 }
 
 
-export {getNFTsInWallet}
+const convertLamports = (lamports: BN) => lamports.toNumber() / 1000000000;
+
+
+export {getNFTsInWallet, convertLamports}

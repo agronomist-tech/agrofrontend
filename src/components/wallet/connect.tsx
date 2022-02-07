@@ -5,6 +5,7 @@ import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Modal, Menu, Button, Space, Tooltip} from "antd";
 import {PublicKey} from "@solana/web3.js";
 import { ReactComponent as Logo } from '../../assets/images/logo.svg';
+import {useStore} from "../../utils/hooks";
 
 
 interface WalletsModalInterface {
@@ -44,6 +45,7 @@ const WalletsModal = ({visible, onClose}: WalletsModalInterface) => {
 
 
 const TokenCount = observer(()=>{
+    const store = useStore();
     const {connection} = useConnection();
     const {wallet, publicKey, connected} = useWallet();
     const [agteBalance, setAgteBalance] = useState(0)
@@ -51,8 +53,11 @@ const TokenCount = observer(()=>{
     useEffect(()=>{
         if (publicKey && connected){
             connection.getParsedTokenAccountsByOwner(publicKey, {mint: new PublicKey("4QV4wzDdy7S1EV6y2r9DkmaDsHeoKz6HUvFLVtAsu6dV")}).then((data)=>{
-                if (data.value.length > 0)
-                    setAgteBalance(data.value[0].account.data.parsed.info.tokenAmount.uiAmount)
+                if (data.value.length > 0) {
+                    const amount = data.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+                    setAgteBalance(amount);
+                    store.setAgteAmount(amount);
+                }
             })
         }
     }, [connected, wallet, connection, publicKey])

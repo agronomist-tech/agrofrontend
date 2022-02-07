@@ -6,6 +6,7 @@ class RootStore {
     nft: NFTStore;
     searchItems: string[] = [];
     searchItem: string | null = null;
+    agteAmount: number = 0;
 
     constructor() {
         makeAutoObservable(this, {
@@ -22,6 +23,10 @@ class RootStore {
 
     setSearchItem(item: string | null){
         this.searchItem = item;
+    }
+
+    setAgteAmount(amount: number) {
+        this.agteAmount = amount;
     }
 }
 

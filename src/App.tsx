@@ -17,6 +17,7 @@ import PairsPage from "./pages/pairs";
 import ExplorePage from "./pages/nft/explore";
 import {HashRouter, Routes, Route} from "react-router-dom";
 import WalletWrapper from "./components/wallet";
+import StakingPage from "./pages/nft/staking";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +32,7 @@ const App = observer(() => {
                         <HashRouter>
                             <Layout style={{height: "100%"}}>
                                 <Layout.Sider style={{
-                                    overflow: 'auto',
+                                    overflowX: 'hidden',
                                     height: '100vh',
                                     position: 'fixed',
                                     left: 0,
@@ -46,6 +47,7 @@ const App = observer(() => {
                                         <Routes>
                                             <Route path="/" element={<PairsPage/>}/>
                                             <Route path="/nft/explore" element={<ExplorePage/>}/>
+                                            <Route path="/nft/staking" element={<StakingPage/>}/>
                                         </Routes>
                                     </Layout.Content>
                                 </Layout>
