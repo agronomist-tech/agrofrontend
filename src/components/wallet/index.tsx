@@ -21,7 +21,7 @@ interface Props {
 
 
 const WalletWrapper = observer((props: Props) => {
-    const network = WalletAdapterNetwork.Devnet;
+    const network = WalletAdapterNetwork.Mainnet;
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
     const wallets = useMemo(
