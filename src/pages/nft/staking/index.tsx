@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, Dispatch, SetStateAction} from 'react';
 import {
     Result,
     Col,
@@ -85,7 +85,6 @@ interface NFTSectionI {
 const NFTSection = ({tokens, stakeAction, unstakeAction}: NFTSectionI) => {
     const {connection} = useConnection();
 
-
     const queries = Object.keys(tokens).map((token) => {
         return {
             queryKey: [token],
@@ -140,6 +139,8 @@ const NFTSection = ({tokens, stakeAction, unstakeAction}: NFTSectionI) => {
 
 interface StakeI {
     client: StakingClient
+    reloading: boolean
+    reloadPage: Dispatch<SetStateAction<boolean>>
 }
 
 
@@ -153,7 +154,7 @@ const calculateReward = (amount: BN, lastRedeemDate: number, apy: number): numbe
 }
 
 
-const StakeForm = ({client}: StakeI) => {
+const StakeForm = ({client, reloading, reloadPage}: StakeI) => {
     const store = useStore();
     const {connection} = useConnection();
 
@@ -180,9 +181,10 @@ const StakeForm = ({client}: StakeI) => {
                 setPendingRedeem(res.pendingRedeem);
                 setUserStaked(res.staked);
             }
-            setLoading(false)
+            setLoading(false);
+            reloadPage(false);
         })
-    }, [])
+    }, [reloading])
 
     useEffect(() => {
         const reward = calculateReward(userStaked, userLastRedeemDate, userApy) + userPendingRedeem
@@ -213,48 +215,60 @@ const StakeForm = ({client}: StakeI) => {
 
     const approveUser = () => {
         client.approveStake().then((tx) => {
-            if (tx) waitTxFinish(tx, connection);
-        }).catch((err)=>{
+            if (tx) waitTxFinish(tx, connection, reloadPage);
+        }).catch((err) => {
             message.info("Something went wrong :(")
-        });;
+        });
     }
 
     const stake = () => {
         client.stake(stakeAmount * LAMPORTS_PER_SOL).then((tx) => {
-            if (tx) waitTxFinish(tx, connection);
-        }).catch((err)=>{
+            if (tx) waitTxFinish(tx, connection, reloadPage);
+        }).catch((err) => {
             message.info("Something went wrong :(")
         });
     }
 
     const stakeNFT = (mint: string) => {
         client.stakeNFT(mint).then((tx) => {
-            if (tx) waitTxFinish(tx, connection);
-        }).catch((err)=>{
-            message.info("Something went wrong :(")
+            if (tx) {
+                waitTxFinish(tx, connection, reloadPage);
+                userTokens[mint] = 1;
+                setUserTokens(userTokens);
+            }
+        }).catch((err) => {
+            message.info("Something went wrong :(");
+            userTokens[mint] = 0;
+            setUserTokens(userTokens);
         });
     }
 
     const unstakeNFT = (mint: string) => {
         client.unstakeNFT(mint).then((tx) => {
-            if (tx) waitTxFinish(tx, connection);
-        }).catch((err)=>{
-            message.info("Something went wrong :(")
+            if (tx) {
+                waitTxFinish(tx, connection, reloadPage);
+                userTokens[mint] = 0;
+                setUserTokens(userTokens);
+            }
+        }).catch((err) => {
+            message.info("Something went wrong :(");
+            userTokens[mint] = 1;
+            setUserTokens(userTokens);
         });
     }
 
     const unstake = () => {
         client.unstake().then((tx) => {
-            if (tx) waitTxFinish(tx, connection);
-        }).catch((err)=>{
+            if (tx) waitTxFinish(tx, connection, reloadPage);
+        }).catch((err) => {
             message.info("Something went wrong :(")
         });
     }
 
     const redeem = () => {
         client.redeem().then((tx) => {
-            if (tx) waitTxFinish(tx, connection);
-        }).catch((err)=>{
+            if (tx) waitTxFinish(tx, connection, reloadPage);
+        }).catch((err) => {
             message.info("Something went wrong :(")
         });
     }
@@ -336,13 +350,14 @@ const StakingPage = () => {
     const anchorWallet = useAnchorWallet();
     const wallet = useWallet();
     const {connection} = useConnection();
+    const [loading, setLoading] = useState(true);
 
     const client = new StakingClient(connection, anchorWallet);
 
     return <Col span={16} offset={4} style={{marginTop: "2rem"}}>
         <StakingStatistic client={client}/>
         <Row style={{marginTop: "2rem"}} justify={"center"}>
-            {wallet.connected ? <StakeForm client={client}/> : <Result title="Please connect wallet before"/>}
+            {wallet.connected ? <StakeForm client={client} reloading={loading} reloadPage={setLoading}/> : <Result title="Please connect wallet before"/>}
         </Row>
     </Col>
 }

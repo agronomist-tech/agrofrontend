@@ -3,13 +3,14 @@ import {
     BN
 } from '@project-serum/anchor'
 import {message} from "antd";
+import {Dispatch, SetStateAction} from "react";
 
 const tokenProgram = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 
 
 const getNFTsInWallet = async (connection: Connection, publicKey: PublicKey): Promise<string[]> => {
     const resp = await connection.getParsedTokenAccountsByOwner(
-        publicKey, {programId: new PublicKey(tokenProgram)}
+        publicKey, {programId: new PublicKey(tokenProgram)}, "confirmed"
     );
 
     return resp.value.filter((mint)=>{
@@ -22,7 +23,7 @@ const getNFTsInWallet = async (connection: Connection, publicKey: PublicKey): Pr
 const convertLamports = (lamports: BN) => lamports.toNumber() / 1000000000;
 
 
-const waitTxFinish = (tx: string, connection: Connection) => {
+const waitTxFinish = (tx: string, connection: Connection, reload: Dispatch<SetStateAction<boolean>>) => {
     const key = "loadmessage";
     message.loading({content: `Wait transaction: ${tx}`, key: key}, 0);
 
@@ -31,9 +32,10 @@ const waitTxFinish = (tx: string, connection: Connection) => {
             if (result === null){
                 setTimeout(w, 5000);
             } else if (result.meta && result.meta.err === null) {
-                message.success({content: `Transaction finished`, key: key}, 5)
+                message.success({content: `Transaction finished`, key: key}, 5);
+                reload(true);
             } else if (result.meta && result.meta.err) {
-                message.error({content: `Transaction ${tx} failed`, key: key}, 5)
+                message.error({content: `Transaction ${tx} failed`, key: key}, 5);
             }
         })
 

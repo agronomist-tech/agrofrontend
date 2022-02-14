@@ -10,7 +10,7 @@ const useStore = ()=>{
 }
 
 
-const useUserNFTs = () => {
+const useUserNFTs = (): boolean => {
     const store = useStore();
     const {connection} = useConnection();
     const {publicKey} = useWallet();
@@ -19,13 +19,13 @@ const useUserNFTs = () => {
     useEffect(()=>store.nft.saveNFTMint(), [store.nft])
 
     useEffect(() => {
-        if (publicKey) {
+        if (publicKey && loading) {
             getNFTsInWallet(connection, publicKey).then((data) => {
                 store.nft.saveUserNFTs(getOurNFT(store.nft.addresses, data));
                 setLoading(false);
             })
         }
-    }, [publicKey, connection, store.nft.addresses, store.nft])
+    }, [publicKey, connection, store.nft.addresses, store.nft, loading])
 
     return loading
 }

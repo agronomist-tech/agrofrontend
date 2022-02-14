@@ -1,4 +1,4 @@
-import {Connection, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
+import {Connection, LAMPORTS_PER_SOL, PublicKey, Commitment} from '@solana/web3.js';
 import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
 import {
     Program,
@@ -56,7 +56,7 @@ class StakingClient {
 
         const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
         try {
-            return await this.connection.getParsedTokenAccountsByOwner(stakingInfoPDA, {programId: TOKEN_PROGRAM_ID})
+            return await this.connection.getParsedTokenAccountsByOwner(stakingInfoPDA, {programId: TOKEN_PROGRAM_ID}, 'confirmed');
         } catch (e) {
             return {}
         }
@@ -320,8 +320,15 @@ class StakingClient {
         const infos = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: agteTokenAddr})
         const agteAccount = infos.value[0].pubkey
 
-        const infos2 = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: mintKey})
-        const sendFrom = infos2.value[0].pubkey
+        const infos2 = await this.connection.getParsedTokenAccountsByOwner(stakingInfoPDA, {mint: mintKey})
+        let sendFrom: PublicKey | null = null;
+        infos2.value.map((acc)=>{
+            if (acc.account.data.parsed.info.tokenAmount.uiAmount === 1){
+                sendFrom = acc.pubkey
+            }
+        })
+
+        if (!sendFrom) return
 
         const sendTo = await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -329,7 +336,6 @@ class StakingClient {
             mintKey,
             this.wallet.publicKey
         )
-
         const tx = await this.program.rpc.unstakeNft(
             {
                 accounts: {
