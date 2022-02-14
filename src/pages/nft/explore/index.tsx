@@ -1,34 +1,15 @@
-import React, {useEffect, useState} from 'react';
-import {useStore} from "../../../utils/hooks";
-import {useWallet, useConnection} from "@solana/wallet-adapter-react";
+import React from 'react';
+import {useStore, useUserNFTs} from "../../../utils/hooks";
+import {useWallet} from "@solana/wallet-adapter-react";
 import {Result, Col, Row} from "antd";
-import {getNFTsInWallet} from "../../../utils/solana";
 import {observer} from "mobx-react-lite";
 import ListNFT from './tokens'
 
 
-
-const getOurNFT = (mints: string[], users: string[]): string[] => {
-    return users.filter((t) => mints.includes(t))
-}
-
-
 const ExplorePage = observer(() => {
     const store = useStore();
-    const [loading, setLoading] = useState(true);
-    const {connection} = useConnection();
-    const {publicKey, connected} = useWallet();
-
-    useEffect(()=>store.nft.saveNFTMint(), [store.nft])
-
-    useEffect(() => {
-        if (publicKey) {
-            getNFTsInWallet(connection, publicKey).then((data) => {
-                store.nft.saveUserNFTs(getOurNFT(store.nft.addresses, data));
-                setLoading(false);
-            })
-        }
-    }, [publicKey, connection, store.nft.addresses, store.nft])
+    const loading = useUserNFTs();
+    const {connected} = useWallet();
 
     return (
         <>

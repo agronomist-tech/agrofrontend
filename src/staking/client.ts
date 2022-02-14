@@ -1,4 +1,4 @@
-import {Connection, PublicKey} from '@solana/web3.js';
+import {Connection, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
 import {TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token} from "@solana/spl-token";
 import {
     Program,
@@ -6,10 +6,8 @@ import {
     BN,
     web3,
 } from '@project-serum/anchor'
-import {Wallet} from '@solana/wallet-adapter-wallets';
 
 import idl from './idl.json'
-import {WalletContextState} from "@solana/wallet-adapter-react/lib/useWallet";
 import {AnchorWallet} from "@solana/wallet-adapter-react";
 import {AGTE_MINT, PROGRAM_ID} from "../utils/consts";
 
@@ -32,12 +30,14 @@ class StakingClient {
     connection: Connection
     wallet: AnchorWallet | undefined
     program: Program
+    tokenMint: PublicKey
 
     constructor(connection: Connection, wallet: AnchorWallet | undefined) {
         this.connection = connection
         this.wallet = wallet
         // @ts-ignore
         this.program = new Program(idl, programId, new Provider(this.connection, this.wallet, opts));
+        this.tokenMint = new PublicKey(AGTE_MINT);
     }
 
     async getStakedAmount(): Promise<BN> {
@@ -45,9 +45,20 @@ class StakingClient {
         // @ts-ignore
         try {
             const res = await this.program.account.stakingSettings.fetch(settingsPDA);
-            return new BN(res.stakedAmount);
+            return new BN(res.stakedAmount / LAMPORTS_PER_SOL);
         } catch {
             return new BN(0);
+        }
+    }
+
+    async getStakingATA() {
+        if (!this.wallet) return {}
+
+        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        try {
+            return await this.connection.getParsedTokenAccountsByOwner(stakingInfoPDA, {programId: TOKEN_PROGRAM_ID})
+        } catch (e) {
+            return {}
         }
     }
 
@@ -61,35 +72,34 @@ class StakingClient {
             staked: new BN('')
         }
         const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
-        try{
+        try {
             const res = await this.program.account.stakeInfo.fetch(stakingInfoPDA);
             settings.apy = res.apy;
-            settings.pendingRedeem = res.pendingRedeem;
+            settings.pendingRedeem = parseInt(res.pendingRedeem) / web3.LAMPORTS_PER_SOL;
             settings.lastRedeemDate = res.lastRedeemDate;
         } catch {
-            return {
-            apy: 120,
-            pendingRedeem: 1.23,
-            lastRedeemDate: 1644266192,
-            staked: new BN(1_000_000_000_000)
-        }
-            // return false; // FIXME: Remove on prod
+            return false;
         }
 
-        const stakingTokenAccount = await Token.getAssociatedTokenAddress(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            agteTokenAddr,
-            stakingInfoPDA
-        )
+        const accounts = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: this.tokenMint})
 
-        const balance = await this.connection.getTokenAccountBalance(stakingTokenAccount);
+        if (accounts.value.length === 0) {
+            return false
+        }
+
+        let balance;
+        try {
+            balance = await this.connection.getTokenAccountBalance(accounts.value[0].pubkey);
+        } catch {
+            return false
+        }
+
         settings.staked = new BN(balance.value.amount);
 
         return settings
     }
 
-    async approveStake() {
+    async approveStake(): Promise<string | undefined> {
         if (!this.wallet) return
 
         const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
@@ -105,13 +115,13 @@ class StakingClient {
         )
 
         const createATAInstruction = Token.createAssociatedTokenAccountInstruction(
-                        ASSOCIATED_TOKEN_PROGRAM_ID,
-                        TOKEN_PROGRAM_ID,
-                        agteTokenAddr,
-                        stakingTokenAccount,
-                        stakingAccount.publicKey,
-                        this.wallet.publicKey
-                    )
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            agteTokenAddr,
+            stakingTokenAccount,
+            stakingAccount.publicKey,
+            this.wallet.publicKey
+        )
         // @ts-ignore
         const tx = await this.program.rpc.stakeInit(
             stakingInfoPDABump,
@@ -132,10 +142,10 @@ class StakingClient {
                 },
                 signers: [stakingAccount],
             });
-        console.log(tx)
+        return tx
     }
 
-    async stake(amount: number) {
+    async stake(amount: number): Promise<string | undefined> {
         if (!this.wallet) return
 
         const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
@@ -166,7 +176,7 @@ class StakingClient {
                     systemProgram: web3.SystemProgram.programId,
                 }
             });
-        console.log(tx);
+        return tx
     }
 
     async unstake() {
@@ -174,6 +184,7 @@ class StakingClient {
 
         const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
         const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+
         const sendTo = await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
@@ -182,7 +193,7 @@ class StakingClient {
         )
         const infos = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: agteTokenAddr})
         // @ts-ignore
-        const sendFrom = infos[0]["value"].pubkey
+        const sendFrom = infos.value[0].pubkey
 
         const tx = await this.program.rpc.unstake(
             {
@@ -198,6 +209,7 @@ class StakingClient {
                     systemProgram: web3.SystemProgram.programId,
                 },
             });
+        return tx
     }
 
     async redeem() {
@@ -207,7 +219,11 @@ class StakingClient {
         const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
 
         const infos = await this.connection.getTokenAccountsByOwner(settingsPDA, {mint: agteTokenAddr})
-        const agteAccount = infos["value"][0].pubkey
+        const agteAccount = infos.value[0].pubkey
+
+        const infos2 = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: agteTokenAddr})
+        const stakingAccount = infos2.value[0].pubkey
+
         const sendTo = await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
@@ -223,12 +239,14 @@ class StakingClient {
 
                     tokenTo: sendTo,
                     stakingInfo: stakingInfoPDA,
+                    stakingAccount: stakingAccount,
                     user: this.wallet.publicKey,
 
                     tokenProgram: TOKEN_PROGRAM_ID,
                     systemProgram: web3.SystemProgram.programId,
                 },
             });
+        return tx
     }
 
     async stakeNFT(mint: string) {
@@ -237,8 +255,8 @@ class StakingClient {
         const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
         const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
 
-        const infos = await this.connection.getTokenAccountsByOwner(settingsPDA, {mint: agteTokenAddr})
-        const agteAccount = infos["value"][0].pubkey
+        const infos = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: agteTokenAddr})
+        const agteAccount = infos.value[0].pubkey
 
         const stakingAccount = await web3.Keypair.generate();
         const mintKey = new PublicKey(mint);
@@ -258,13 +276,13 @@ class StakingClient {
         )
 
         const createATAInstruction = Token.createAssociatedTokenAccountInstruction(
-                        ASSOCIATED_TOKEN_PROGRAM_ID,
-                        TOKEN_PROGRAM_ID,
-                        mintKey,
-                        stakingTokenAccount,
-                        stakingAccount.publicKey,
-                        this.wallet.publicKey
-                    )
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            mintKey,
+            stakingTokenAccount,
+            stakingAccount.publicKey,
+            this.wallet.publicKey
+        )
 
         const tx = await this.program.rpc.stakeNft(
             {
@@ -288,6 +306,7 @@ class StakingClient {
                 },
                 signers: [stakingAccount]
             });
+        return tx
     }
 
     async unstakeNFT(mint: string) {
@@ -298,12 +317,11 @@ class StakingClient {
 
         const mintKey = new PublicKey(mint);
 
-        const sendFrom = await Token.getAssociatedTokenAddress(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            mintKey,
-            stakingInfoPDA
-        )
+        const infos = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: agteTokenAddr})
+        const agteAccount = infos.value[0].pubkey
+
+        const infos2 = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: mintKey})
+        const sendFrom = infos2.value[0].pubkey
 
         const sendTo = await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -320,6 +338,7 @@ class StakingClient {
                     tokenTo: sendTo,
 
                     stakingInfo: stakingInfoPDA,
+                    agteAccount: agteAccount,
 
                     user: this.wallet.publicKey,
 
@@ -327,6 +346,7 @@ class StakingClient {
                     systemProgram: web3.SystemProgram.programId,
                 },
             });
+        return tx
     }
 }
 

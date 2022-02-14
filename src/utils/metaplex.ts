@@ -26,4 +26,9 @@ const getNFTMetadata = async (connection: Connection, address: PublicKey | strin
 }
 
 
-export {getNFTMetadata};
+const getOurNFT = (mints: string[], users: string[]): string[] => {
+    return users.filter((t) => mints.includes(t))
+}
+
+
+export {getNFTMetadata, getOurNFT};

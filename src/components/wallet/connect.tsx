@@ -4,8 +4,9 @@ import {observer} from "mobx-react-lite";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Modal, Menu, Button, Space, Tooltip} from "antd";
 import {PublicKey} from "@solana/web3.js";
-import { ReactComponent as Logo } from '../../assets/images/logo.svg';
+import {ReactComponent as Logo} from '../../assets/images/logo.svg';
 import {useStore} from "../../utils/hooks";
+import {AGTE_MINT} from "../../utils/consts";
 
 
 interface WalletsModalInterface {
@@ -34,7 +35,9 @@ const WalletsModal = ({visible, onClose}: WalletsModalInterface) => {
         title="Connect wallet"
         visible={visible}
         footer={null}
-        onCancel={()=>{onClose()}}
+        onCancel={() => {
+            onClose()
+        }}
         width={330}
     >
         <Menu>
@@ -44,28 +47,32 @@ const WalletsModal = ({visible, onClose}: WalletsModalInterface) => {
 }
 
 
-const TokenCount = observer(()=>{
+const TokenCount = observer(() => {
     const store = useStore();
     const {connection} = useConnection();
     const {wallet, publicKey, connected} = useWallet();
-    const [agteBalance, setAgteBalance] = useState(0)
+    const [agteBalance, setAgteBalance] = useState(0.)
 
-    useEffect(()=>{
-        if (publicKey && connected){
-            connection.getParsedTokenAccountsByOwner(publicKey, {mint: new PublicKey("4QV4wzDdy7S1EV6y2r9DkmaDsHeoKz6HUvFLVtAsu6dV")}).then((data)=>{
-                if (data.value.length > 0) {
-                    const amount = data.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-                    setAgteBalance(amount);
-                    store.setAgteAmount(amount);
-                }
-            })
+    useEffect(() => {
+        if (publicKey && connected) {
+            connection.getParsedTokenAccountsByOwner(publicKey, {mint: new PublicKey(AGTE_MINT)})
+                .then((data) => {
+                    if (data.value.length > 0) {
+                        const amount = data.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+                        setAgteBalance(amount);
+                        store.setAgteAmount(amount);
+                    }
+                })
+                .catch((reason)=>{
+                    console.error(reason)
+                })
         }
     }, [connected, wallet, connection, publicKey])
 
     return (
         <Tooltip placement="bottom" title="AGTE Tokens">
             <div className="agte-amount">
-                <Logo style={{width: "24px"}}/> <span>{agteBalance}</span>
+                <Logo style={{width: "24px"}}/> <span>{agteBalance.toFixed(2)}</span>
             </div>
         </Tooltip>
     )
@@ -77,16 +84,16 @@ const WalletConnectButtonWithModal = observer(() => {
     const {wallet, publicKey, connecting, connected, connect} = useWallet();
     const [walletText, setWalletText] = useState("")
 
-    useEffect(()=>{
-        if (wallet){
-            connect().catch((err)=>{
+    useEffect(() => {
+        if (wallet) {
+            connect().catch((err) => {
                 console.log(err)
-        });
+            });
         }
     }, [wallet, connect])
 
-    useEffect(()=>{
-        if (connecting){
+    useEffect(() => {
+        if (connecting) {
             setWalletText("Connecting...")
         } else if (connected && publicKey) {
             const key = publicKey.toBase58()

@@ -194,6 +194,11 @@
           "isSigner": false
         },
         {
+          "name": "stakingAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "tokenTo",
           "isMut": true,
           "isSigner": false
@@ -277,6 +282,11 @@
       "accounts": [
         {
           "name": "settingsAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "agteAccount",
           "isMut": true,
           "isSigner": false
         },

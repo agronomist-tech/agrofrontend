@@ -1,18 +1,30 @@
 import React, {useEffect, useState} from 'react';
-import {Result, Col, Row, Card, Tabs, Input, Button, Space, Statistic, List, Avatar, Skeleton} from "antd";
-import {useStore} from "../../../utils/hooks";
+import {
+    Result,
+    Col,
+    Row,
+    Input,
+    Button,
+    Statistic,
+    List,
+    Avatar,
+    Skeleton,
+    message
+} from "antd";
+import {useStore, useUserNFTs} from "../../../utils/hooks";
 import StakingClient from "../../../staking/client";
 import {useAnchorWallet, useWallet, useConnection} from "@solana/wallet-adapter-react";
 import dayjs from 'dayjs'
 import duration from "dayjs/plugin/duration";
 import {UserSettings} from "../../../staking/client";
 import {
-    Program,
-    Provider,
-    BN,
-    web3,
+    BN
 } from '@project-serum/anchor'
-import {convertLamports} from "../../../utils/solana";
+import {convertLamports, waitTxFinish} from "../../../utils/solana";
+import {LAMPORTS_PER_SOL} from "@solana/web3.js";
+import {getNFTMetadata} from "../../../utils/metaplex";
+import {useQueries} from "react-query";
+import {MetadataData} from "@metaplex/js/lib/programs/metadata";
 
 
 dayjs.extend(duration);
@@ -43,6 +55,89 @@ const StakingStatistic = ({client}: StatisticI) => {
 }
 
 
+interface StakedNFTI {
+    mint: string
+    image: string
+    stakeAction: (mint: string) => void
+    staked: boolean
+}
+
+
+const StakedNFT = ({mint, image, stakeAction, staked}: StakedNFTI) => {
+    return <List.Item
+        actions={[
+            <Button type={"primary"} onClick={() => stakeAction(mint)}>{staked ? "Unstake" : "Stake"}</Button>
+        ]}>
+        <List.Item.Meta
+            avatar={<Avatar shape={"square"} src={image} size={64}/>}
+        />
+    </List.Item>
+}
+
+
+interface NFTSectionI {
+    tokens: { [key: string]: number }
+    stakeAction: (mint: string) => void
+    unstakeAction: (mint: string) => void
+}
+
+
+const NFTSection = ({tokens, stakeAction, unstakeAction}: NFTSectionI) => {
+    const {connection} = useConnection();
+
+
+    const queries = Object.keys(tokens).map((token) => {
+        return {
+            queryKey: [token],
+            queryFn: () => getNFTMetadata(connection, token),
+            retryDelay: Math.random() * 10,
+            refetchInterval: false,
+            cacheTime: Infinity,
+            staleTime: Infinity,
+            // @ts-ignore
+            select: (data) => {
+                return data.data
+            }
+        }
+    })
+    // @ts-ignore
+    const metadatas = useQueries(queries)
+
+    const datas = useQueries(metadatas.filter((resp) => {
+        return resp.isSuccess && resp.data
+    }).map((resp) => {
+        const d = resp.data as MetadataData
+
+        return {
+            queryKey: [d.mint, d.data.uri],
+            queryFn: () => fetch(d.data.uri).then((resp) => {
+                return resp.json()
+            }).then((data) => {
+                const staked = tokens[d.mint];
+                return <StakedNFT
+                    key={d.mint}
+                    mint={d.mint}
+                    // @ts-ignore
+                    image={data.image}
+                    // @ts-ignore
+                    stakeAction={staked ? unstakeAction : stakeAction} staked={staked}/>
+            }),
+            retryDelay: Math.random() * 10,
+            cacheTime: Infinity,
+            staleTime: Infinity,
+        }
+    }))
+
+    return (
+        <>
+            {
+                datas.map((r) => r.data)
+            }
+        </>
+    )
+}
+
+
 interface StakeI {
     client: StakingClient
 }
@@ -53,13 +148,14 @@ const calculateReward = (amount: BN, lastRedeemDate: number, apy: number): numbe
     const now = dayjs();
 
     const stakedHours = parseInt(dayjs.duration(now.diff(lastRedeem)).asHours().toFixed());
-    console.log("Calculate reward ", lastRedeemDate, apy, amount, stakedHours);
+
     return apy / 8760 / 100. * amount.toNumber() * stakedHours / 1000000000;
 }
 
 
 const StakeForm = ({client}: StakeI) => {
     const store = useStore();
+    const {connection} = useConnection();
 
     const [approved, setApproved] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -70,9 +166,12 @@ const StakeForm = ({client}: StakeI) => {
     const [userPendingRedeem, setPendingRedeem] = useState(0);
     const [userReward, setUserReward] = useState(0);
 
+    const [userTokens, setUserTokens] = useState({} as { [key: string]: number })
+    const nftLoading = useUserNFTs();
+
     useEffect(() => {
         client.userApproved().then((res: UserSettings | boolean) => {
-            if (typeof res === "boolean"){
+            if (typeof res === "boolean") {
                 setApproved(res);
             } else {
                 setApproved(true);
@@ -85,8 +184,79 @@ const StakeForm = ({client}: StakeI) => {
         })
     }, [])
 
+    useEffect(() => {
+        const reward = calculateReward(userStaked, userLastRedeemDate, userApy) + userPendingRedeem
+        setUserReward(reward);
+    }, [userStaked, userLastRedeemDate, userApy, userPendingRedeem])
+
+    useEffect(() => {
+        if (!nftLoading) {
+            store.nft.userNFTs.forEach((t) => {
+                userTokens[t] = 0
+            });
+
+            client.getStakingATA().then((result) => {
+                if (result) {
+                    // @ts-ignore
+                    result.value.forEach((v) => {
+                        const mint = v.account.data.parsed.info.mint;
+                        const value = v.account.data.parsed.info.tokenAmount.uiAmount;
+
+                        if (value === 1) userTokens[mint] = 1;
+                    })
+                }
+                setUserTokens(userTokens);
+            })
+        }
+
+    }, [nftLoading])
+
     const approveUser = () => {
-        client.approveStake();
+        client.approveStake().then((tx) => {
+            if (tx) waitTxFinish(tx, connection);
+        }).catch((err)=>{
+            message.info("Something went wrong :(")
+        });;
+    }
+
+    const stake = () => {
+        client.stake(stakeAmount * LAMPORTS_PER_SOL).then((tx) => {
+            if (tx) waitTxFinish(tx, connection);
+        }).catch((err)=>{
+            message.info("Something went wrong :(")
+        });
+    }
+
+    const stakeNFT = (mint: string) => {
+        client.stakeNFT(mint).then((tx) => {
+            if (tx) waitTxFinish(tx, connection);
+        }).catch((err)=>{
+            message.info("Something went wrong :(")
+        });
+    }
+
+    const unstakeNFT = (mint: string) => {
+        client.unstakeNFT(mint).then((tx) => {
+            if (tx) waitTxFinish(tx, connection);
+        }).catch((err)=>{
+            message.info("Something went wrong :(")
+        });
+    }
+
+    const unstake = () => {
+        client.unstake().then((tx) => {
+            if (tx) waitTxFinish(tx, connection);
+        }).catch((err)=>{
+            message.info("Something went wrong :(")
+        });
+    }
+
+    const redeem = () => {
+        client.redeem().then((tx) => {
+            if (tx) waitTxFinish(tx, connection);
+        }).catch((err)=>{
+            message.info("Something went wrong :(")
+        });
     }
 
     const setMaxAmount = () => {
@@ -102,6 +272,7 @@ const StakeForm = ({client}: StakeI) => {
                             <Input
                                 defaultValue={0}
                                 value={stakeAmount}
+                                onChange={(amount) => setStakeAmount(parseInt(amount.target.value))}
                                 suffix={<Button disabled={!approved} type={"text"} onClick={setMaxAmount}>max</Button>}
                                 disabled={!approved}
                             />
@@ -110,6 +281,7 @@ const StakeForm = ({client}: StakeI) => {
                             {approved ? <Button
                                     style={{width: "100px", marginLeft: "1rem"}}
                                     type={"primary"}
+                                    onClick={stake}
                                 >Stake</Button> :
                                 <Button
                                     style={{width: "100px", marginLeft: "1rem"}}
@@ -128,59 +300,29 @@ const StakeForm = ({client}: StakeI) => {
                                         <div>{`${userApy}%`}</div>
                                     </List.Item>
                                     <List.Item
+                                    >
+                                        <List.Item.Meta title={"Your AGTE balance"}/>
+                                        <div>{`${store.agteAmount}`}</div>
+                                    </List.Item>
+                                    <List.Item
                                         actions={[
-                                            <Button type={"primary"} onClick={client.unstake}>Unstake</Button>
+                                            <Button type={"primary"} onClick={unstake}>Unstake</Button>
                                         ]}
                                     >
                                         <List.Item.Meta title={"Staked"}/>
                                         <div>{`${convertLamports(userStaked)} AGTE`}</div>
                                     </List.Item>
                                     <List.Item
-                                        actions={[<Button type={"primary"} onClick={client.redeem}>Redeem</Button>]}
+                                        actions={[<Button type={"primary"} onClick={redeem}>Redeem</Button>]}
                                     >
                                         <List.Item.Meta title={"Your reward"}/>
-                                        <div>{`${calculateReward(userStaked, userLastRedeemDate, userApy).toFixed(9)} AGTE`}</div>
+                                        <div>{`${userReward.toFixed(9)} AGTE`}</div>
                                     </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
-                                    <List.Item actions={[<Button type={"primary"}>Stake</Button>]}>
-                                        <List.Item.Meta
-                                            avatar={<Avatar shape={"square"} size={64}/>}
-                                        />
-                                    </List.Item>
+                                    <NFTSection
+                                        tokens={userTokens}
+                                        stakeAction={stakeNFT}
+                                        unstakeAction={unstakeNFT}
+                                    />
                                 </List>
                             </Row>
                         </> : <div style={{marginBottom: "4rem"}}></div>
