@@ -90,14 +90,6 @@ const PairsPage = observer(() => {
         }
     }
 
-    // useEffect(()=>{
-    //     // Manage new page open with search param
-    //     const pair = searchParams.get("pair");
-    //     if (pair){
-    //         setActivePair(pair);
-    //     }
-    // }, [])
-
     useEffect(() => {
         const pair = searchParams.get('pair');
         if (pair != null) {

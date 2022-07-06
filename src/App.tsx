@@ -1,5 +1,6 @@
 import React from 'react';
 import {createContext} from "react"
+import {BigNumber as BN} from 'bignumber.js';
 import './styles/theme.less';
 import './styles/global.css';
 import './styles/components.css';
@@ -18,10 +19,24 @@ import ExplorePage from "./pages/nft/explore";
 import {HashRouter, Routes, Route} from "react-router-dom";
 import WalletWrapper from "./components/wallet";
 import StakingPage from "./pages/nft/staking";
+import PoolsPage from "./pages/pools";
 
 const queryClient = new QueryClient();
 
 const Store = createContext<RootStore>(rootStore);
+
+const BNFmt = {
+  prefix: '',
+  decimalSeparator: '.',
+  groupSeparator: ',',
+  groupSize: 3,
+  secondaryGroupSize: 0,
+  fractionGroupSeparator: ' ',
+  fractionGroupSize: 0,
+  suffix: ''
+}
+
+BN.config({ FORMAT: BNFmt, DECIMAL_PLACES: 9 })
 
 const App = observer(() => {
     return (
@@ -46,6 +61,7 @@ const App = observer(() => {
                                     <Layout.Content>
                                         <Routes>
                                             <Route path="/" element={<PairsPage/>}/>
+                                            <Route path="/pools" element={<PoolsPage/>}/>
                                             <Route path="/nft/explore" element={<ExplorePage/>}/>
                                             <Route path="/nft/staking" element={<StakingPage/>}/>
                                         </Routes>

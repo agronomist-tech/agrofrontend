@@ -28,9 +28,10 @@ const LeftMenu = () => {
                         <Menu.Item key="pairs">
                             <Link to={"/"}>Pairs</Link>
                         </Menu.Item>
-                        <Menu.Item key="pools" disabled>Pools <Tag color={"gold"}>SOON</Tag></Menu.Item>
+                        <Menu.Item key="pools">
+                            <Link to={"/pools"}>Pools</Link>
+                        </Menu.Item>
                         <Menu.Item key="farms" disabled>Farms <Tag color={"gold"}>SOON</Tag></Menu.Item>
-                        <Menu.Item key="staking" disabled>Staking <Tag color={"gold"}>SOON</Tag></Menu.Item>
                         <Menu.ItemGroup key="nft" title="NFT">
                             <Menu.Item key="nftExplorer">
                                 <Link to={"/nft/explore"}>Explore</Link>
