@@ -95,6 +95,8 @@ tr.active-pair {
   background-color: @table-selected-row-bg;
 }
 
+// Table filter
+@table-filter-dropdown-bg: @table-selected-row-bg;
 
 // Pagination
 @pagination-item-bg: @table-selected-row-bg;
@@ -119,6 +121,7 @@ tr.active-pair {
 // radio button
 @radio-button-bg: transparent;
 @radio-button-checked-bg: @radio-button-bg;
+@radio-button-focus-shadow: none;
 
 .ant-radio-button-wrapper {
   border: 0;
@@ -164,3 +167,8 @@ tr.active-pair {
 @popover-color: @text-color;
 @popover-bg: @layout-header-background;
 @border-color-split: #222222;
+
+// Dropdown
+@dropdown-menu-bg: @input-bg;
+@item-hover-bg: @layout-header-background;
+@dropdown-selected-bg: @input-bg;

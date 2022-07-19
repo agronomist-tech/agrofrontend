@@ -3,9 +3,9 @@ import {Col, Row, Table, Popover, Avatar, List, Radio} from 'antd';
 import {useQuery} from "react-query";
 import {observer} from "mobx-react-lite";
 import {useStore} from "../../utils/hooks";
-import {fetchLPoolsInfo, LPoolInfo} from "../../utils/api";
-import {BigNumber as BN} from 'bignumber.js';
+import {fetchLPoolsInfo, fetchPoolHistory, LPoolInfo} from "../../utils/api";
 import {useSearchParams} from "react-router-dom";
+import {RechartLPoolChart} from "../../components/charts";
 
 
 const columns = [
@@ -18,10 +18,14 @@ const columns = [
                 text: "Raydium",
                 value: "raydium"
             },
-            {
-                text: "ORCA",
-                value: "orca"
-            }],
+            // {
+            //     text: "ORCA",
+            //     value: "orca"
+            // }
+            ],
+        onFilter: (value: string, record: LPoolInfo) => {
+            return record.source === value;
+        },
         render: (text: string) => {
             if (text === "raydium") {
                 return <Avatar
@@ -133,6 +137,7 @@ const columns = [
 
 
 interface PoolChartProps {
+    address: string
     baseToken: string
     quoteToken: string
     source: string
@@ -140,9 +145,22 @@ interface PoolChartProps {
 
 
 const PoolChart = observer((props: PoolChartProps) => {
-    const [activeChart, setActiveChart] = useState("")
+    const [activeChart, setActiveChart] = useState("base")
+    const [activePeriod, setActivePeriod] = useState("24H");
 
-    useEffect(()=>setActiveChart(props.baseToken), [props.baseToken])
+    const {
+        isLoading: isHistoryLoading,
+        data: historyData,
+        refetch: refetchHistory
+    } = useQuery(
+        ['poolData', props.address, activeChart, activePeriod],
+        () => fetchPoolHistory(props.address, activeChart, activePeriod),
+        {enabled: false}
+    )
+
+    useEffect(() => {
+        refetchHistory()
+    }, [activeChart, activePeriod])
 
     let sourceIcon = "ray";
     switch (props.source) {
@@ -158,7 +176,7 @@ const PoolChart = observer((props: PoolChartProps) => {
 
     return <React.Fragment>
         <Row className="pair-title">
-            <Col span={18}>
+            <Col span={12}>
                 <div>
                     {source}
                     <Avatar.Group maxCount={2} size={24} style={{marginRight: "8px"}}>
@@ -173,18 +191,34 @@ const PoolChart = observer((props: PoolChartProps) => {
                 <Radio.Group value={activeChart} onChange={(e) => {
                     setActiveChart(e.target.value)
                 }}>
-                    <Radio.Button value={props.baseToken}>{props.baseToken.toUpperCase()}</Radio.Button>
-                    <Radio.Button value={props.quoteToken}>{props.quoteToken.toUpperCase()}</Radio.Button>
+                    <Radio.Button value="base">{props.baseToken.toUpperCase()}</Radio.Button>
+                    <Radio.Button value="quote">{props.quoteToken.toUpperCase()}</Radio.Button>
                     <Radio.Button value="liquidity">{"Liquidity"}</Radio.Button>
                 </Radio.Group>
             </Col>
+            <Col span={6} style={{textAlign: "right", paddingRight: "1rem"}}>
+                <Radio.Group defaultValue={"24H"} onChange={(e) => {
+                    setActivePeriod(e.target.value)
+                }}>
+                    <Radio.Button value="24H">24H</Radio.Button>
+                    <Radio.Button value="7D">7D</Radio.Button>
+                    <Radio.Button value="1M">1M</Radio.Button>
+                    <Radio.Button value="3M">3M</Radio.Button>
+                </Radio.Group>
+            </Col>
         </Row>
+        {!isHistoryLoading && historyData ?
+                <Row style={{width: "100%"}}>
+                    <RechartLPoolChart x={historyData.dates} y={historyData.prices}/>
+                </Row> : <></>
+            }
     </React.Fragment>
 })
 
 
 const PoolsPage = observer(() => {
     const {isLoading, data} = useQuery('lpools', fetchLPoolsInfo, {refetchInterval: 300000})
+    const [pools, setPools] = useState<LPoolInfo[]>([]);
     const [activePool, setActivePool] = useState<LPoolInfo | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
     const store = useStore();
@@ -199,25 +233,41 @@ const PoolsPage = observer(() => {
             }
         }
         if (activePool && activePool.address === record.address) {
-            store.setSearchItem(null);
             setActivePool(null);
             setSearchParams({});
         } else {
             setActivePool(record);
             setSearchParams({pool: record.address});
         }
+
+        if (store.searchItem && store.searchItem !== `${record.baseCurrency}/${record.quoteCurrency}`) {
+            store.setSearchItem(null);
+        }
     }
 
     useEffect(() => {
         if (searchParams.has("pool")) {
             const p = searchParams.get("pool");
-            if (p) setActiveRow(p)
+            if (p && data) {
+                const res = data?.filter(v => v.address === p)
+                if (res) {
+                    setActivePool(res[0]);
+                }
+            }
+
+            if (store.searchItem && data){
+                const items = data?.filter((pool => pool.address === p))
+                setPools(items);
+            }
+        } else {
+            if (data) setPools(data);
         }
-    }, [])
+    }, [store.searchItem, data])
 
     return <>
         <Col>
             {activePool ? <PoolChart
+                address={activePool.address}
                 baseToken={activePool.baseCurrency}
                 quoteToken={activePool.quoteCurrency}
                 source={activePool.source}
@@ -226,8 +276,10 @@ const PoolsPage = observer(() => {
                 <Table
                     size={"small"}
                     loading={isLoading}
+                    // @ts-ignore
                     columns={columns}
-                    dataSource={data}
+                    // title={() => <div>{"BLAH"}</div>}
+                    dataSource={pools}
                     rowClassName={(record: LPoolInfo): string => {
                         if (activePool && record.address === activePool.address) {
                             return "active-pair"

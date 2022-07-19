@@ -1,10 +1,11 @@
 import { makeAutoObservable, runInAction, action } from 'mobx';
-import {searchPairs} from "../utils/api";
+import {makeSearchRequest, SearchResult} from "../utils/api";
 import NFTStore from "./nft";
+
 
 class RootStore {
     nft: NFTStore;
-    searchItems: string[] = [];
+    searchItems: SearchResult[] = [];
     searchItem: string | null = null;
     agteAmount: number = 0;
 
@@ -17,7 +18,7 @@ class RootStore {
     }
 
     async search(query: string){
-        const items = await searchPairs(query);
+        const items = await makeSearchRequest(query);
         runInAction(()=>this.searchItems=items);
     }
 

@@ -134,8 +134,8 @@ const PairsPage = observer(() => {
                                             src={process.env.PUBLIC_URL + `/tokens/${activePair.split("/")[1]}.png`}/>
                                     </Avatar.Group>
 
-                                    {activePair} {historyData ?
-                                        <span className="pair-cost">{parseFloat(historyData.prices.slice(-1)[0]).toFixed(8)}</span> :
+                                    {activePair} {historyData && historyData.prices.length > 0 && historyData.dates.length > 0 ?
+                                        <span className="pair-cost">{historyData.prices.slice(-1)[0].toFixed(8)}</span> :
                                     <></>}
                                 </div>
 

@@ -1,16 +1,22 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Col, Row, Menu, Tag} from 'antd';
 import {ReactComponent as Logo} from '../../assets/images/logo.svg';
 import {Link, useLocation} from "react-router-dom";
 import {useStore} from "../../utils/hooks";
 
 const LeftMenu = () => {
+    const [active, setActive] = useState<string[]>([])
     const store = useStore();
     let location = useLocation();
 
     useEffect(()=>{
-        if (location.pathname !== "/"){
-            store.setSearchItem(null);
+        switch (location.pathname) {
+            case "/":
+                setActive(["pairs"]);
+                break
+            case "/pools":
+                setActive(["pools"]);
+                break
         }
     }, [location.pathname])
 
@@ -24,7 +30,7 @@ const LeftMenu = () => {
                     <a href="https://app.agronomist.tech"><Logo style={{width: "80px"}}/></a>
                 </Row>
                 <Row>
-                    <Menu mode="inline" defaultSelectedKeys={["pairs"]}>
+                    <Menu mode="inline" defaultSelectedKeys={["pairs"]} selectedKeys={active}>
                         <Menu.Item key="pairs">
                             <Link to={"/"}>Pairs</Link>
                         </Menu.Item>
