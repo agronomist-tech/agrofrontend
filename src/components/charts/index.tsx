@@ -1,5 +1,5 @@
 import React from 'react';
-import dayjs, {extend} from 'dayjs'
+import dayjs from 'dayjs'
 import {BigNumber as BN} from 'bignumber.js';
 import {Area, AreaChart, Tooltip, XAxis, YAxis, ResponsiveContainer, TooltipProps} from "recharts";
 

@@ -2,11 +2,9 @@ import React, {useEffect, useState} from 'react';
 import {Col, Row, Menu, Tag} from 'antd';
 import {ReactComponent as Logo} from '../../assets/images/logo.svg';
 import {Link, useLocation} from "react-router-dom";
-import {useStore} from "../../utils/hooks";
 
 const LeftMenu = () => {
     const [active, setActive] = useState<string[]>([])
-    const store = useStore();
     let location = useLocation();
 
     useEffect(()=>{

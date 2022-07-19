@@ -67,7 +67,8 @@ const TokenCount = observer(() => {
                     console.error(reason)
                 })
         }
-    }, [connected, wallet, connection, publicKey])
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+        [connected, wallet, connection, publicKey])
 
     return (
         <Tooltip placement="bottom" title="AGTE Tokens">

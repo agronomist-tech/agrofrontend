@@ -41,7 +41,7 @@ class StakingClient {
     }
 
     async getStakedAmount(): Promise<BN> {
-        const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
+        const [settingsPDA] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
         // @ts-ignore
         try {
             const res = await this.program.account.stakingSettings.fetch(settingsPDA);
@@ -54,7 +54,7 @@ class StakingClient {
     async getStakingATA() {
         if (!this.wallet) return {}
 
-        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        const [stakingInfoPDA] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
         try {
             return await this.connection.getParsedTokenAccountsByOwner(stakingInfoPDA, {programId: TOKEN_PROGRAM_ID}, 'confirmed');
         } catch (e) {
@@ -71,7 +71,7 @@ class StakingClient {
             pendingRedeem: 0,
             staked: new BN('')
         }
-        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        const [stakingInfoPDA] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
         try {
             const res = await this.program.account.stakeInfo.fetch(stakingInfoPDA);
             settings.apy = res.apy;
@@ -103,7 +103,7 @@ class StakingClient {
         if (!this.wallet) return
 
         const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
-        const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
+        const [settingsPDA] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
 
         const stakingAccount = await web3.Keypair.generate();
 
@@ -148,8 +148,8 @@ class StakingClient {
     async stake(amount: number): Promise<string | undefined> {
         if (!this.wallet) return
 
-        const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
-        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        const [settingsPDA] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
+        const [stakingInfoPDA] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
 
         const info = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: agteTokenAddr})
         const stakingTokenAccount = info["value"][0].pubkey;
@@ -182,8 +182,8 @@ class StakingClient {
     async unstake() {
         if (!this.wallet) return
 
-        const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
-        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        const [settingsPDA] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
+        const [stakingInfoPDA] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
 
         const sendTo = await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -215,8 +215,8 @@ class StakingClient {
     async redeem() {
         if (!this.wallet) return
 
-        const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
-        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        const [settingsPDA] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
+        const [stakingInfoPDA] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
 
         const infos = await this.connection.getTokenAccountsByOwner(settingsPDA, {mint: agteTokenAddr})
         const agteAccount = infos.value[0].pubkey
@@ -252,8 +252,8 @@ class StakingClient {
     async stakeNFT(mint: string) {
         if (!this.wallet) return
 
-        const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
-        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        const [settingsPDA] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
+        const [stakingInfoPDA] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
 
         const infos = await this.connection.getTokenAccountsByOwner(stakingInfoPDA, {mint: agteTokenAddr})
         const agteAccount = infos.value[0].pubkey
@@ -312,8 +312,8 @@ class StakingClient {
     async unstakeNFT(mint: string) {
         if (!this.wallet) return
 
-        const [settingsPDA, settingsPDABump] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
-        const [stakingInfoPDA, stakingInfoPDABump] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
+        const [settingsPDA] = await web3.PublicKey.findProgramAddress([Buffer.from("settings")], programId)
+        const [stakingInfoPDA] = await web3.PublicKey.findProgramAddress([this.wallet.publicKey.toBuffer(), Buffer.from("agrostaking")], programId)
 
         const mintKey = new PublicKey(mint);
 
@@ -322,7 +322,7 @@ class StakingClient {
 
         const infos2 = await this.connection.getParsedTokenAccountsByOwner(stakingInfoPDA, {mint: mintKey})
         let sendFrom: PublicKey | null = null;
-        infos2.value.map((acc)=>{
+        infos2.value.forEach((acc)=>{
             if (acc.account.data.parsed.info.tokenAmount.uiAmount === 1){
                 sendFrom = acc.pubkey
             }

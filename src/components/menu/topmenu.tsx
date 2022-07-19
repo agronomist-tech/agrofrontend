@@ -12,7 +12,7 @@ const TopMenu = observer(() => {
     const store = useStore();
     let navigate = useNavigate();
     let location = useLocation();
-    let [searchParams, setSearchParams] = useSearchParams();
+    let setSearchParams = useSearchParams()[1];
 
     const items = store.searchItems.map((item)=>{
         return <Select.Option key={item.id} value={`${item.type}-${item.name}`}>

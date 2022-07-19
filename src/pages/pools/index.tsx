@@ -160,7 +160,8 @@ const PoolChart = observer((props: PoolChartProps) => {
 
     useEffect(() => {
         refetchHistory()
-    }, [activeChart, activePeriod])
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeChart, activePeriod])
 
     let sourceIcon = "ray";
     switch (props.source) {
@@ -262,7 +263,8 @@ const PoolsPage = observer(() => {
         } else {
             if (data) setPools(data);
         }
-    }, [store.searchItem, data])
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+        [store.searchItem, data])
 
     return <>
         <Col>

@@ -44,7 +44,7 @@ const StakingStatistic = ({client}: StatisticI) => {
             setStaked(amount);
             setLoading(false);
         })
-    }, [])
+    })
 
     return (
         <Row justify={"space-between"}>
@@ -184,7 +184,8 @@ const StakeForm = ({client, reloading, reloadPage}: StakeI) => {
             setLoading(false);
             reloadPage(false);
         })
-    }, [reloading])
+    },// eslint-disable-next-line react-hooks/exhaustive-deps
+        [reloading])
 
     useEffect(() => {
         const reward = calculateReward(userStaked, userLastRedeemDate, userApy) + userPendingRedeem
@@ -211,7 +212,8 @@ const StakeForm = ({client, reloading, reloadPage}: StakeI) => {
             })
         }
 
-    }, [nftLoading])
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+        [nftLoading])
 
     const approveUser = () => {
         client.approveStake().then((tx) => {
