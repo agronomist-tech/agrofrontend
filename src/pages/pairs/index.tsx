@@ -43,6 +43,7 @@ const columns = [
         title: "Last price update",
         dataIndex: "lastUpdate",
         key: "update",
+        defaultSortOrder: 'descend',
         sorter: (a: Pair, b: Pair) => {
             return (dayjs(a.lastUpdate) > dayjs(b.lastUpdate)) ? 1 : -1
         }
@@ -173,6 +174,7 @@ const PairsPage = observer(() => {
                         rowClassName={setActiveClass}
                         loading={isLoading}
                         style={{width: "100%"}}
+                        // @ts-ignore
                         columns={columns}
                         dataSource={pairsData}/>
                 </Row>
